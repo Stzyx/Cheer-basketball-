@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cheer vs Basketball</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif;
+    background: linear-gradient(to right, #fbc2eb, #a6c1ee);
+    color: #fff; display: flex; flex-direction: column;
+    -webkit-user-select: none; user-select: none;
+  }
+  .top-bar {
+    text-align: center; padding: 10px; font-size: 1.5em;
+    background-color: rgba(0,0,0,0.2);
+  }
+  .game-area {
+    flex: 1; display: flex; width: 100%;
+  }
+  .side {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-weight: bold; position: relative; overflow: hidden;
+  }
+  .left {
+    background: #ff94c2;
+  }
+  .right {
+    background: #7ebaff;
+  }
+  .score {
+    font-size: 3em; margin-top: 10px;
+  }
+  .animated-img {
+    position: absolute; width: 80px; height: 80px;
+    animation: pop 0.3s ease-out forwards;
+  }
+  @keyframes pop {
+    0% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.5); opacity: 1; }
+    100% { transform: scale(1); opacity: 0; }
+  }
+  .winner {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8);
+    padding: 20px 30px; border-radius: 12px;
+    font-size: 2em; z-index: 10;
+    text-align: center;
+    display: none;
+  }
+  button {
+    background: white; color: #333; font-size: 1em;
+    padding: 10px 20px; border-radius: 10px;
+    border: none; cursor: pointer; margin-top: 15px;
+  }
+  /* Confetti styles */
+  .confetti {
+    position: fixed;
+    width: 10px; height: 10px;
+    opacity: 0.9;
+    animation: fall 3s linear forwards;
+  }
+  @keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(100vh) rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">Time: <span id="timer">30</span>s</div>
+
+<div class="game-area">
+  <div class="side left" id="left">
+    <img src="https://i.imgur.com/ytzv7Mn.png" alt="Cheer Stunt" width="100" />
+    <div>Cheer Stunts</div>
+    <div class="score" id="leftScore">0</div>
+  </div>
+  <div class="side right" id="right">
+    <img src="https://i.imgur.com/6u0NKwF.png" alt="Basketball Hoop" width="100" />
+    <div>Baskets</div>
+    <div class="score" id="rightScore">0</div>
+  </div>
+</div>
+
+<div class="winner" id="winner">
+  <div id="winnerText"></div>
+  <button onclick="startGame()">Play Again</button>
+</div>
+
+<audio id="cheerSound" src="https://www.soundjay.com/human/cheer-01.wav" preload="auto"></audio>
+<audio id="bounceSound" src="https://www.soundjay.com/button/button-3.mp3" preload="auto"></audio>
+
+<script>
+  let leftScore = 0;
+  let rightScore = 0;
+  let timer = 30;
+  let interval;
+
+  const leftDiv = document.getElementById('left');
+  const rightDiv = document.getElementById('right');
+  const leftScoreEl = document.getElementById('leftScore');
+  const rightScoreEl = document.getElementById('rightScore');
+  const timerDisplay = document.getElementById('timer');
+  const winnerDiv = document.getElementById('winner');
+  const winnerText = document.getElementById('winnerText');
+  const cheerSound = document.getElementById('cheerSound');
+  const bounceSound = document.getElementById('bounceSound');
+
+  function updateScores() {
+    leftScoreEl.textContent = leftScore;
+    rightScoreEl.textContent = rightScore;
+  }
+
+  function endGame() {
+    clearInterval(interval);
+    let result = "";
+    if (leftScore > rightScore) result = "Cheerleader Wins! 🎉";
+    else if (rightScore > leftScore) result = "Basketball Player Wins! 🏆";
+    else result = "It's a Tie! 💖";
+    winnerText.textContent = result;
+    winnerDiv.style.display = 'block';
+    launchConfetti();
+  }
+
+  function startGame() {
+    leftScore = 0;
+    rightScore = 0;
+    timer = 30;
+    updateScores();
+    timerDisplay.textContent = timer;
+    winnerDiv.style.display = 'none';
+    clearConfetti();
+
+    interval = setInterval(() => {
+      timer--;
+      timerDisplay.textContent = timer;
+      if (timer <= 0) {
+        endGame();
+      }
+    }, 1000);
+  }
+
+  function createAnimatedImg(side, src) {
+    const img = document.createElement('img');
+    img.src = src;
+    img.classList.add('animated-img');
+    img.style.left = Math.random() * 80 + 10 + '%';
+    img.style.top = '40%';
+    side.appendChild(img);
+    setTimeout(() => side.removeChild(img), 500);
+  }
+
+  function handleCheerTap() {
+    if (timer <= 0) return;
+    leftScore++;
+    updateScores();
+    cheerSound.currentTime = 0;
+    cheerSound.play();
+    createAnimatedImg(leftDiv, 'https://i.imgur.com/ytzv7Mn.png');
+  }
+
+  function handleBasketTap() {
+    if (timer <= 0) return;
+    rightScore++;
+    updateScores();
+    bounceSound.currentTime = 0;
+    bounceSound.play();
+    createAnimatedImg(rightDiv, 'https://i.imgur.com/6u0NKwF.png');
+  }
+
+  leftDiv.addEventListener('touchstart', handleCheerTap);
+  rightDiv.addEventListener('touchstart', handleBasketTap);
+
+  function launchConfetti() {
+    for (let i = 0; i < 100; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = Math.random() * 100 + 'vw';
+      confetti.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
+      confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+      document.body.appendChild(confetti);
+      setTimeout(() => confetti.remove(), 4000);
+    }
+  }
+
+  function clearConfetti() {
+    document.querySelectorAll('.confetti').forEach(el => el.remove());
+  }
+
+  startGame();
+</script>
+
+</body>
+</html>
